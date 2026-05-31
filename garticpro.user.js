@@ -1,3 +1,24 @@
+// ==UserScript==
+// @name         GarticPro v4.3
+// @namespace    http://tampermonkey.net/
+// @version      4.3
+// @author       Astrer
+// @match        *://gartic.io/*
+// @grant        GM_xmlhttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_cookie
+// @grant        GM_info
+// @connect      limegreen-wolverine-863744.hostingersite.com
+// @connect      trycloudflare.com
+// @connect      croxyproxy.com
+// @connect      195.3.222.40
+// @connect      185.16.39.213
+// @connect      195.3.223.166
+// @connect      146.19.24.89
+// @connect      *
+// ==/UserScript==
+
 (async function () {
     'use strict';
 
@@ -206,10 +227,15 @@
                 border-bottom:none;
                 bottom:0;left:0;right:0;
                 box-shadow:0 -8px 40px rgba(0,0,0,0.8);
-                transform:translateY(110%);
+                transform:translateY(120%);
                 transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);
+                visibility:hidden;
             }
-            #gp.mob-open{transform:translateY(0);}
+            #gp.mob-open{
+                transform:translateY(0);
+                visibility:visible;
+            }
+            #gp-close{display:none !important;}
         }
 
         /* ── DRAG HANDLE ── */
@@ -454,7 +480,6 @@
                 <div id="status-pip" class="connecting"></div>
                 <div class="hdr-btns">
                     <button class="hdr-btn" id="gp-min" title="Küçült">–</button>
-                    <button class="hdr-btn" id="gp-close" title="Kapat">✕</button>
                 </div>
             </div>
         </div>
@@ -600,10 +625,11 @@
             cont.classList.add('mob-open');
         });
 
-        // – butonu → panel kapat, FAB'a dön
+        // – butonu → panel tamamen kapat, FAB'a dön
         $('gp-min').onclick=()=>{
             cont.classList.remove('mob-open');
             isMinimized=true;
+            // force reflow sonra visibility:hidden devreye girer transition ile
         };
 
         // Swipe down header → kapat
@@ -679,7 +705,11 @@
             isMinimized=!isMinimized;
             cont.classList.toggle('minimized',isMinimized);
         };
-        $('gp-close').onclick=()=>host.remove();
+        // Desktop: close by adding close btn only for desktop via JS
+        const closeBtn=document.createElement('button');
+        closeBtn.className='hdr-btn';closeBtn.textContent='✕';closeBtn.title='Kapat';
+        closeBtn.onclick=()=>host.remove();
+        $('gp-hdr').querySelector('.hdr-btns').appendChild(closeBtn);
     }
 
     // ── TABS ──
