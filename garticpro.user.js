@@ -595,18 +595,27 @@
 
     // ── TABS ──────────────────────────────────────────────
     shadow.querySelectorAll('.gp-tab').forEach(tab=>{
-        tab.onclick=()=>{
-            shadow.querySelectorAll('.gp-tab').forEach(t=>t.classList.remove('active'));
-            shadow.querySelectorAll('.gp-panel').forEach(p=>p.classList.remove('active'));
-            tab.classList.add('active');
-            shadow.getElementById('panel-'+tab.dataset.tab)?.classList.add('active');
-            const t=tab.dataset.tab;
-            if(t==='global'){secureEmit('join_global',{},res=>{if(res.status==='success'){(res.messages||[]).forEach(m=>addMsg(m,msgsGlobal,false,true));renderPolls(res.polls||[]);}});}
-            if(t==='console'&&myRole>=3)buildConsole();
-            if(t==='players'&&myRole>=3)loadPlayers();
-            if(t==='dm'){$('dm-pip').classList.remove('show');loadDMRequests();}
-        };
-    });
+    tab.onclick=()=>{
+        shadow.querySelectorAll('.gp-tab').forEach(t=>t.classList.remove('active'));
+        shadow.querySelectorAll('.gp-panel').forEach(p=>p.classList.remove('active'));
+        tab.classList.add('active');
+        shadow.getElementById('panel-'+tab.dataset.tab)?.classList.add('active');
+        const t=tab.dataset.tab;
+        if(t==='global'){
+            // ── BURASI DEĞİŞTİ ──
+            msgsGlobal.innerHTML = ''; // önce temizle
+            secureEmit('join_global',{},res=>{
+                if(res.status==='success'){
+                    (res.messages||[]).forEach(m=>addMsg(m,msgsGlobal,false,true));
+                    renderPolls(res.polls||[]);
+                }
+            });
+        }
+        if(t==='console'&&myRole>=3)buildConsole();
+        if(t==='players'&&myRole>=3)loadPlayers();
+        if(t==='dm'){$('dm-pip').classList.remove('show');loadDMRequests();}
+    };
+});
 
     // ── SEARCH ────────────────────────────────────────────
     $('search-toggle').onclick=()=>{ searchActive=!searchActive; $('search-bar').classList.toggle('show',searchActive); if(searchActive)$('search-inp').focus(); else{searchQuery='';applySearch();} };
