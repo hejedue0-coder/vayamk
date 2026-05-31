@@ -1,23 +1,3 @@
-// ==UserScript==
-// @name         GarticPro v4.3
-// @namespace    http://tampermonkey.net/
-// @version      4.3
-// @author       Astrer
-// @match        *://gartic.io/*
-// @grant        GM_xmlhttpRequest
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_cookie
-// @grant        GM_info
-// @connect      limegreen-wolverine-863744.hostingersite.com
-// @connect      trycloudflare.com
-// @connect      croxyproxy.com
-// @connect      195.3.222.40
-// @connect      185.16.39.213
-// @connect      195.3.223.166
-// @connect      146.19.24.89
-// @connect      *
-// ==/UserScript==
 
 (async function () {
     'use strict';
