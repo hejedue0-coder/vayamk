@@ -35,7 +35,7 @@
         try{const r=JSON.parse(buf.join(''));delete chunkBufs[raw.cid];return r;}catch{return null;}
     }
 
-    const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent) || window.innerWidth < 768;
+    const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 
     let idb = null;
     async function initIDB() {
@@ -190,10 +190,11 @@
             position:fixed;
             bottom:24px;right:24px;
             overflow:hidden;
-            transition:height 0.2s cubic-bezier(0.4,0,0.2,1);
+            transition:height 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.32s cubic-bezier(0.4,0,0.2,1);
             pointer-events:auto;
         }
         #gp.minimized{height:48px;}
+        #gp.gp-hidden{display:none !important;transform:translateY(120%) !important;}
 
         /* ── MOBİL PANEL ── */
         @media(max-width:767px){
@@ -207,15 +208,7 @@
                 border-bottom:none;
                 bottom:0;left:0;right:0;
                 box-shadow:0 -8px 40px rgba(0,0,0,0.8);
-                transform:translateY(120%);
-                transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);
-                visibility:hidden;
             }
-            #gp.mob-open{
-                transform:translateY(0);
-                visibility:visible;
-            }
-            #gp-close{display:none !important;}
         }
 
         /* ── DRAG HANDLE ── */
@@ -241,8 +234,8 @@
         .hdr-btn:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.75);}
         @media(max-width:767px){
             .hdr-btn{width:36px;height:36px;font-size:15px;}
-            /* mobilde X gizli, sadece – var */
-            #gp-close{display:none;}
+
+
         }
 
         /* ── XP ── */
@@ -597,44 +590,54 @@
     }
 
     // ── MOBİL FAB & PANEL LOGIC ──
+    function mobClose(){
+        cont.style.transform='translateY(120%)';
+        setTimeout(()=>{ cont.classList.add('gp-hidden'); },320);
+        isMinimized=true;
+    }
+    function mobOpen(){
+        cont.classList.remove('gp-hidden');
+        cont.style.transform='translateY(120%)';
+        // force reflow
+        cont.getBoundingClientRect();
+        cont.style.transform='translateY(0)';
+        isMinimized=false;
+    }
+
     if(isMobile){
+        // Başlangıçta panel gizle
+        cont.classList.add('gp-hidden');
+        cont.style.transform='translateY(120%)';
+        cont.style.transition='transform 0.32s cubic-bezier(0.4,0,0.2,1)';
+
         // FAB tıkla → panel aç
         fab.addEventListener('click', e=>{
             if(fab._dragged) return;
-            isMinimized=false;
-            cont.classList.add('mob-open');
+            mobOpen();
         });
 
-        // – butonu → panel tamamen kapat, FAB'a dön
-        $('gp-min').onclick=()=>{
-            cont.classList.remove('mob-open');
-            isMinimized=true;
-            // force reflow sonra visibility:hidden devreye girer transition ile
-        };
+        // – butonu → panel kapat, FAB'a dön
+        $('gp-min').onclick=()=>{ mobClose(); };
 
-        // Swipe down header → kapat
+        // Swipe down drag handle → kapat
         let tStartY=0, swipeActive=false;
         const dragHandle=$('drag-handle');
-        const swipeEl=dragHandle;
 
-        swipeEl.addEventListener('touchstart',e=>{
+        dragHandle.addEventListener('touchstart',e=>{
             tStartY=e.touches[0].clientY;
             swipeActive=true;
         },{passive:true});
-        swipeEl.addEventListener('touchmove',e=>{
+        dragHandle.addEventListener('touchmove',e=>{
             if(!swipeActive)return;
             const dy=e.touches[0].clientY-tStartY;
             if(dy>0) cont.style.transform=`translateY(${dy}px)`;
         },{passive:true});
-        swipeEl.addEventListener('touchend',e=>{
+        dragHandle.addEventListener('touchend',e=>{
             if(!swipeActive)return;
             swipeActive=false;
             const dy=e.changedTouches[0].clientY-tStartY;
-            cont.style.transform='';
-            if(dy>80){
-                cont.classList.remove('mob-open');
-                isMinimized=true;
-            }
+            if(dy>80){ mobClose(); }
+            else { cont.style.transform='translateY(0)'; }
         },{passive:true});
 
         // FAB sürükleme
