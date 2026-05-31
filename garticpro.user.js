@@ -149,32 +149,33 @@
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         :host{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
 
-        /* ── FAB (sadece mobil) ── */
+        /* ── CHAT BUTTON (sadece mobil) ── */
         #gp-fab{
             display:none;
             position:fixed;
-            bottom:28px;right:20px;
-            width:60px;height:60px;
-            border-radius:50%;
-            background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
-            box-shadow:0 8px 28px rgba(79,70,229,0.55);
+            top:10px;
+            left:50%;
+            transform:translateX(-50%);
+            height:36px;
+            padding:0 20px;
+            border-radius:20px;
+            background:rgba(79,70,229,0.92);
+            backdrop-filter:blur(10px);
+            box-shadow:0 4px 16px rgba(79,70,229,0.5);
             z-index:2147483647;
             align-items:center;justify-content:center;
-            flex-direction:column;gap:3px;
+            flex-direction:row;gap:8px;
             cursor:pointer;
-            border:2px solid rgba(255,255,255,0.18);
-            transition:transform 0.15s,box-shadow 0.15s;
-            touch-action:none;
+            border:1px solid rgba(255,255,255,0.2);
             pointer-events:auto;
             user-select:none;
+            white-space:nowrap;
         }
-        #gp-fab:active{transform:scale(0.92);box-shadow:0 4px 16px rgba(79,70,229,0.4);}
-        .fab-logo{font-size:13px;font-weight:800;letter-spacing:0.05em;color:#fff;line-height:1;}
-        .fab-sub{font-size:8px;color:rgba(255,255,255,0.55);letter-spacing:0.08em;text-transform:uppercase;}
-        .fab-pip{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px rgba(34,197,94,0.8);position:absolute;top:8px;right:8px;}
-        .fab-pip.connecting{background:#F59E0B;box-shadow:0 0 6px rgba(245,158,11,0.8);}
-        .fab-pip.offline{background:#EF4444;box-shadow:0 0 6px rgba(239,68,68,0.8);}
-        .fab-notif{position:absolute;top:4px;left:8px;width:11px;height:11px;border-radius:50%;background:#EF4444;border:2px solid #1a1b1e;display:none;}
+        .fab-logo{font-size:13px;font-weight:700;letter-spacing:0.06em;color:#fff;}
+        .fab-pip{width:6px;height:6px;border-radius:50%;background:#22C55E;box-shadow:0 0 5px rgba(34,197,94,0.9);}
+        .fab-pip.connecting{background:#F59E0B;}
+        .fab-pip.offline{background:#EF4444;}
+        .fab-notif{width:8px;height:8px;border-radius:50%;background:#EF4444;display:none;}
         .fab-notif.show{display:block;}
 
         /* ── PANEL ── */
@@ -201,13 +202,21 @@
             #gp-fab{display:flex;}
             #gp{
                 width:100vw;
-                height:72vh;
-                min-height:400px;
-                max-height:95vh;
+                height:60vh;
+                min-height:320px;
+                max-height:80vh;
                 border-radius:20px 20px 0 0;
                 border-bottom:none;
                 bottom:0;left:0;right:0;
                 box-shadow:0 -8px 40px rgba(0,0,0,0.8);
+            }
+            /* Klavye açıkken panel yukarı kaymasın, mesajlar görünsün */
+            #gp .gp-msgs{
+                flex:1;
+                min-height:0;
+            }
+            #gp .gp-input-wrap{
+                flex-shrink:0;
             }
         }
 
@@ -431,10 +440,9 @@
     const fab = document.createElement('div');
     fab.id = 'gp-fab';
     fab.innerHTML = `
-        <div class="fab-notif" id="fab-notif"></div>
         <div class="fab-pip connecting" id="fab-pip"></div>
-        <div class="fab-logo">GP</div>
-        <div class="fab-sub">Chat</div>
+        <div class="fab-logo">CHAT</div>
+        <div class="fab-notif" id="fab-notif"></div>
     `;
     shadow.appendChild(fab);
 
@@ -640,25 +648,26 @@
             else { cont.style.transform='translateY(0)'; }
         },{passive:true});
 
-        // FAB sürükleme
-        let fabDragging=false,fabSX=0,fabSY=0,fabOX=0,fabOY=0;
-        fab.addEventListener('touchstart',e=>{
-            fabSX=e.touches[0].clientX; fabSY=e.touches[0].clientY;
-            const r=fab.getBoundingClientRect();
-            fabOX=r.left; fabOY=r.top;
-            fabDragging=true; fab._dragged=false;
-        },{passive:true});
-        document.addEventListener('touchmove',e=>{
-            if(!fabDragging)return;
-            const dx=e.touches[0].clientX-fabSX;
-            const dy=e.touches[0].clientY-fabSY;
-            if(Math.abs(dx)>6||Math.abs(dy)>6) fab._dragged=true;
-            const nx=Math.min(window.innerWidth-64,Math.max(0,fabOX+dx));
-            const ny=Math.min(window.innerHeight-64,Math.max(0,fabOY+dy));
-            fab.style.right='auto'; fab.style.bottom='auto';
-            fab.style.left=nx+'px'; fab.style.top=ny+'px';
-        },{passive:true});
-        document.addEventListener('touchend',()=>{ fabDragging=false; });
+        // FAB sabit üstte, sürükleme yok
+        fab._dragged = false;
+
+        // Klavye açıkken panel scroll fix
+        const allInps = [
+            $('inp-room'), $('inp-global'), $('inp-dm'),
+            $('reg-inp'), $('search-inp')
+        ];
+        allInps.forEach(inp=>{
+            if(!inp) return;
+            inp.addEventListener('focus', ()=>{
+                // Klavye açılınca mesaj alanı scroll'u en alta götür
+                setTimeout(()=>{
+                    const msgs = cont.querySelector('.gp-panel.active .gp-msgs');
+                    if(msgs) msgs.scrollTop = msgs.scrollHeight;
+                    // Panel viewport içinde kalması için
+                    inp.scrollIntoView({block:'nearest', behavior:'smooth'});
+                }, 300);
+            });
+        });
 
         // DM pip → FAB badge sync
         const dmPipEl=$('dm-pip');
